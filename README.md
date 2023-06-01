@@ -16,4 +16,6 @@ Here are some incoming developments:
 * Fix annoying dialog that pops up for each(!) control if transformations do not match when constraining
 * Add support for full control library
 
-This tool was created for speeding up the control creating process and for coding practice.
+This tool was created for speeding up the control creating process and for coding practice. I am still an inexperienced coder, and will gladly accept criticism and advice.
+
+-Leevi
