@@ -7,7 +7,9 @@ from shiboken2 import wrapInstance
 
 USERAPPDIR = pm.internalVar(userAppDir=True)
 DIRECTORY = os.path.join(USERAPPDIR, '2023/prefs/icons')
-DEFAULTCOL = (0.9, 0.65, 0)
+DEFAULTLCOL = (0.31, 1, 1)
+DEFAULTMCOL = (1, 0.935, 0.117)
+DEFAULTRCOL = (1, 0, 0.5)
 
 
 def _getMayaMainWindow():
@@ -45,7 +47,9 @@ class CtrlsUI(QtWidgets.QWidget):
                            'parent': ['Parent constraint', True]}
         self.connectorButtons = {}
         self.offsetButtons = {}
-        self.ctrlColor = DEFAULTCOL
+        self.ctrlLColor = DEFAULTLCOL
+        self.ctrlMColor = DEFAULTMCOL
+        self.ctrlRColor = DEFAULTRCOL
         # self.cvOrigPos = [] for saving cvs original positions
 
         try:
@@ -138,14 +142,24 @@ class CtrlsUI(QtWidgets.QWidget):
         self.offsetSpins[1].valueChanged.connect(lambda val: self._changeOffsetY(ctrlOffsetY=val))
         self.offsetSpins[2].valueChanged.connect(lambda val: self._changeOffsetZ(ctrlOffsetZ=val))
         row += 1
-        # column = 0
+        column = 0
 
         # Push button for color. Button color set to represent control objects color with self._setButtonColor().
         # Connected to self._setColor.
-        self.colorBtn = QtWidgets.QPushButton()
-        self._setButtonColor()
-        self.colorBtn.clicked.connect(self._setColor)
-        layout.addWidget(self.colorBtn, row, 0, 1, 3)
+        self.LColorBtn = QtWidgets.QPushButton()
+        self._setLButtonColor()
+        self.LColorBtn.clicked.connect(self._setLColor)
+        layout.addWidget(self.LColorBtn, row, 0, 1, 1)
+
+        self.MColorBtn = QtWidgets.QPushButton()
+        self._setMButtonColor()
+        self.MColorBtn.clicked.connect(self._setMColor)
+        layout.addWidget(self.MColorBtn, row, 1, 1, 1)
+
+        self.RColorBtn = QtWidgets.QPushButton()
+        self._setRButtonColor()
+        self.RColorBtn.clicked.connect(self._setRColor)
+        layout.addWidget(self.RColorBtn, row, 2, 1, 1)
         row += 1
 
         # Multiple checkboxes for making connections and constraints. Make boxes from self.connectors -dictionary, uses
@@ -181,20 +195,50 @@ class CtrlsUI(QtWidgets.QWidget):
         layout.addWidget(self.doneBtn, row, 0, 1, 3)
         row +=1
 
-    def _setButtonColor(self, color=None):
+    def _setLButtonColor(self, color=None):
         """
-        Sets color for the self.colorBtn.
+        Sets color for the self.colorLBtn.
         Args:
             color: Tuple or list of three float values (0-1). If none given uses values from self.ctrlColor.
         """
         if not color:
-            color = self.ctrlColor
+            color = self.ctrlLColor
 
         assert len(color) == 3, "You must provide a list of three values"
 
         r, g, b = [c * 255 for c in color]
 
-        self.colorBtn.setStyleSheet('background-color: rgba({0}, {1}, {2}, 1.0)'.format(r, g, b))
+        self.LColorBtn.setStyleSheet('background-color: rgba({0}, {1}, {2}, 1.0)'.format(r, g, b))
+
+    def _setMButtonColor(self, color=None):
+        """
+        Sets color for the self.color-mBtn.
+        Args:
+            color: Tuple or list of three float values (0-1). If none given uses values from self.ctrlColor.
+        """
+        if not color:
+            color = self.ctrlMColor
+
+        assert len(color) == 3, "You must provide a list of three values"
+
+        r, g, b = [c * 255 for c in color]
+
+        self.MColorBtn.setStyleSheet('background-color: rgba({0}, {1}, {2}, 1.0)'.format(r, g, b))
+
+    def _setRButtonColor(self, color=None):
+        """
+        Sets color for the self.colorRBtn.
+        Args:
+            color: Tuple or list of three float values (0-1). If none given uses values from self.ctrlColor.
+        """
+        if not color:
+            color = self.ctrlRColor
+
+        assert len(color) == 3, "You must provide a list of three values"
+
+        r, g, b = [c * 255 for c in color]
+
+        self.RColorBtn.setStyleSheet('background-color: rgba({0}, {1}, {2}, 1.0)'.format(r, g, b))
 
     def _connectTranslate(self, connect=False):
         if connect:
@@ -264,10 +308,13 @@ class CtrlsUI(QtWidgets.QWidget):
         self.offsetSpins[0].setValue(0)
         self.offsetSpins[1].setValue(0)
         self.offsetSpins[2].setValue(0)
-        self.ctrlColor = DEFAULTCOL
-        self._setButtonColor()
-        for c in self.ctrls:
-            pm.setAttr(c.overrideColorRGB, self.ctrlColor[0], self.ctrlColor[1], self.ctrlColor[2])
+        self.ctrlLColor = DEFAULTLCOL
+        self.ctrlMColor = DEFAULTMCOL
+        self.ctrlRColor = DEFAULTRCOL
+        self._setLButtonColor()
+        self._setMButtonColor()
+        self._setRButtonColor()
+        self._setDefaultColor()
         for button in self.connectorButtons:
             self.connectorButtons[button].setChecked(False)
         for button in self.offsetButtons:
@@ -335,7 +382,6 @@ class CtrlsUI(QtWidgets.QWidget):
             # set control color to default
             pm.setAttr(ctrl.overrideEnabled, 1)
             pm.setAttr(ctrl.overrideRGBColors, 1)
-            pm.setAttr(ctrl.overrideColorRGB, self.ctrlColor[0], self.ctrlColor[1], self.ctrlColor[2])
             '''
             For saving every cvs original position:
             cvs = ctrl.cv[0:]
@@ -360,6 +406,8 @@ class CtrlsUI(QtWidgets.QWidget):
         for ctrl in self.ctrls:
             # somehow ctrl is not scaled exactly 1, 1, 1 when created. So must do this manually.
             pm.setAttr(ctrl.scale, 1, 1, 1)
+        # set default colors for ctrls
+        self._setDefaultColor()
         # set controls to match UI values
         self._changeRadius(self.radiusSlider.value() / 10)
         self._changeOffsetX(self.offsetSpins[0].value())
@@ -444,18 +492,56 @@ class CtrlsUI(QtWidgets.QWidget):
         for con in self.constructors:
             pm.setAttr(con.normalZ, ctrlNormalZ)
 
-    def _setColor(self):
+    def _setLColor(self):
         """
         Opens color editor, then splits gotten rgba-floats and assigns them into color (=r, g, b).
         Overrides ctrl color with these values then calls _setButtonColor to set button color.
         """
-        color = pm.colorEditor(rgbValue=self.ctrlColor)
+        color = pm.colorEditor(rgbValue=self.ctrlLColor)
         r, g, b, a = [float(c) for c in color.split()]
         color = (r, g, b)
         for c in self.ctrls:
-            pm.setAttr(c.overrideColorRGB, r, g, b)
-        self.ctrlColor = color
-        self._setButtonColor(color)
+            if pm.getAttr(c.getParent(1).tx) > 0:
+                pm.setAttr(c.overrideColorRGB, r, g, b)
+        self.ctrlLColor = color
+        self._setLButtonColor(color)
+
+    def _setMColor(self):
+        """
+        Opens color editor, then splits gotten rgba-floats and assigns them into color (=r, g, b).
+        Overrides ctrl color with these values then calls _setButtonColor to set button color.
+        """
+        color = pm.colorEditor(rgbValue=self.ctrlLColor)
+        r, g, b, a = [float(c) for c in color.split()]
+        color = (r, g, b)
+        for c in self.ctrls:
+            if pm.getAttr(c.getParent(1).tx) == 0:
+                pm.setAttr(c.overrideColorRGB, r, g, b)
+        self.ctrlMColor = color
+        self._setMButtonColor(color)
+
+    def _setRColor(self):
+        """
+        Opens color editor, then splits gotten rgba-floats and assigns them into color (=r, g, b).
+        Overrides ctrl color with these values then calls _setButtonColor to set button color.
+        """
+        color = pm.colorEditor(rgbValue=self.ctrlLColor)
+        r, g, b, a = [float(c) for c in color.split()]
+        color = (r, g, b)
+        for c in self.ctrls:
+            if pm.getAttr(c.getParent(1).tx) < 0:
+                pm.setAttr(c.overrideColorRGB, r, g, b)
+        self.ctrlRColor = color
+        self._setRButtonColor(color)
+
+    def _setDefaultColor(self):
+        for c in self.ctrls:
+            if pm.getAttr(c.getParent(1).tx) > 0:
+                pm.setAttr(c.overrideColorRGB, DEFAULTLCOL[0], DEFAULTLCOL[1], DEFAULTLCOL[2])
+            elif pm.getAttr(c.getParent(1).tx) == 0:
+                pm.setAttr(c.overrideColorRGB, DEFAULTMCOL[0], DEFAULTMCOL[1], DEFAULTMCOL[2])
+            else:
+                pm.setAttr(c.overrideColorRGB, DEFAULTRCOL[0], DEFAULTRCOL[1], DEFAULTRCOL[2])
 
     def _flushCtrls(self):
 
@@ -602,7 +688,8 @@ class CtrlsUI(QtWidgets.QWidget):
             else:
                 selection.append(self.sel[i])
                 self.ctrlPointCon.append(pm.pointConstraint(ctrl, self.sel[i], maintainOffset=True))
-        self._notifyNoMatch(selection)
+        if selection:
+            self._notifyNoMatch(selection)
 
     def _delPointConstraints(self):
         try:
@@ -626,7 +713,8 @@ class CtrlsUI(QtWidgets.QWidget):
             else:
                 selection.append(self.sel[i])
                 self.ctrlOrientCon.append(pm.orientConstraint(ctrl, self.sel[i], maintainOffset=True))
-        self._notifyNoMatch(selection)
+        if selection:
+            self._notifyNoMatch(selection)
 
     def _delOrientConstraints(self):
         try:
@@ -650,7 +738,8 @@ class CtrlsUI(QtWidgets.QWidget):
             else:
                 selection.append(self.sel[i])
                 self.ctrlScaleCon.append(pm.scaleConstraint(ctrl, self.sel[i], maintainOffset=True))
-        self._notifyNoMatch(selection)
+        if selection:
+            self._notifyNoMatch(selection)
 
     def _delScaleConstraints(self):
         try:
@@ -675,7 +764,8 @@ class CtrlsUI(QtWidgets.QWidget):
             else:
                 selection.append(self.sel[i])
                 self.ctrlParentCon.append(pm.parentConstraint(ctrl, self.sel[i], maintainOffset=True))
-        self._notifyNoMatch(selection)
+        if selection:
+            self._notifyNoMatch(selection)
 
     def _delParentConstraints(self):
         try:
