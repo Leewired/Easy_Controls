@@ -591,6 +591,7 @@ class CtrlsUI(QtWidgets.QWidget):
             pm.setAttr(ctrlScale, 1, 1, 1)
 
     def _pointConstrain(self):
+        selection = []
         for i, ctrl in enumerate(self.ctrls):
 
             if self.offsetButtons['point'].isChecked():
@@ -599,9 +600,9 @@ class CtrlsUI(QtWidgets.QWidget):
                     pm.getAttr(ctrl.translate):
                 self.ctrlPointCon.append(pm.pointConstraint(ctrl, self.sel[i], maintainOffset=False))
             else:
-                pm.confirmDialog(title="Error", message="Translations do not match on: \"{0}\" and \"{1}\"\n\n"
-                                                        "Constrained {0} WITH offset".format(self.sel[i], ctrl))
+                selection.append(self.sel[i])
                 self.ctrlPointCon.append(pm.pointConstraint(ctrl, self.sel[i], maintainOffset=True))
+        self._notifyNoMatch(selection)
 
     def _delPointConstraints(self):
         try:
@@ -615,6 +616,7 @@ class CtrlsUI(QtWidgets.QWidget):
             pm.setAttr(ctrl.translate, 0, 0, 0)
 
     def _orientConstrain(self):
+        selection = []
         for i, ctrl in enumerate(self.ctrls):
             if self.offsetButtons['orient'].isChecked():
                 self.ctrlOrientCon.append(pm.orientConstraint(ctrl, self.sel[i], maintainOffset=True))
@@ -622,9 +624,9 @@ class CtrlsUI(QtWidgets.QWidget):
                     pm.getAttr(ctrl.rotate):
                 self.ctrlOrientCon.append(pm.orientConstraint(ctrl, self.sel[i], maintainOffset=False))
             else:
-                pm.confirmDialog(title="Error", message="Rotations do not match on: \"{0}\" and \"{1}\"\n\n"
-                                                        "Constrained {0} WITH offset".format(self.sel[i], ctrl))
+                selection.append(self.sel[i])
                 self.ctrlOrientCon.append(pm.orientConstraint(ctrl, self.sel[i], maintainOffset=True))
+        self._notifyNoMatch(selection)
 
     def _delOrientConstraints(self):
         try:
@@ -638,6 +640,7 @@ class CtrlsUI(QtWidgets.QWidget):
             pm.setAttr(ctrl.rotate, 0, 0, 0)
 
     def _scaleConstrain(self):
+        selection = []
         for i, ctrl in enumerate(self.ctrls):
             if self.offsetButtons['scale'].isChecked():
                 self.ctrlScaleCon.append(pm.scaleConstraint(ctrl, self.sel[i], maintainOffset=True))
@@ -645,9 +648,9 @@ class CtrlsUI(QtWidgets.QWidget):
                     pm.getAttr(ctrl.scale):
                 self.ctrlScaleCon.append(pm.scaleConstraint(ctrl, self.sel[i], maintainOffset=False))
             else:
-                pm.confirmDialog(title="Error", message="Scales do not match on: \"{0}\" and \"{1}\"\n\n"
-                                                        "Constrained {0} WITH offset".format(self.sel[i], ctrl))
+                selection.append(self.sel[i])
                 self.ctrlScaleCon.append(pm.scaleConstraint(ctrl, self.sel[i], maintainOffset=True))
+        self._notifyNoMatch(selection)
 
     def _delScaleConstraints(self):
         try:
@@ -661,6 +664,7 @@ class CtrlsUI(QtWidgets.QWidget):
             pm.setAttr(ctrl.scale, 1, 1, 1)
 
     def _parentConstrain(self):
+        selection = []
         for i, ctrl in enumerate(self.ctrls):
             if self.offsetButtons['parent'].isChecked():
                 self.ctrlParentCon.append(pm.parentConstraint(ctrl, self.sel[i], maintainOffset=True))
@@ -669,9 +673,9 @@ class CtrlsUI(QtWidgets.QWidget):
                     and pm.getAttr(self.sel[i].rotate) == pm.getAttr(ctrl.rotate):
                 self.ctrlParentCon.append(pm.parentConstraint(ctrl, self.sel[i], maintainOffset=False))
             else:
-                pm.confirmDialog(title="Error", message="Some attributes do not match on: \"{0}\" and \"{1}\"\n\n"
-                                                        "Constrained {0} WITH offset".format(self.sel[i], ctrl))
+                selection.append(self.sel[i])
                 self.ctrlParentCon.append(pm.parentConstraint(ctrl, self.sel[i], maintainOffset=True))
+        self._notifyNoMatch(selection)
 
     def _delParentConstraints(self):
         try:
@@ -685,16 +689,15 @@ class CtrlsUI(QtWidgets.QWidget):
             pm.setAttr(ctrl.translate, 0, 0, 0)
             pm.setAttr(ctrl.rotate, 0, 0, 0)
 
+    def _notifyNoMatch(self, selection):
+        msg = "Some attributes do not match on: \n"
+        for i in selection:
+            msg += str(i) + "\n"
+        msg += "Constrained them WITH offset"
+        pm.confirmDialog(title="Attributes don't match.", message=msg)
+
     def _finish(self):
         for ctrl in self.ctrls:
             pm.delete(ctrl, ch=True)
         self._flushCtrls()
 
-
-'''
-Fixes:
-    -Add not matching transforms to list and display it if offset are used
-    -Add left/mid/right coloring
-    
-    ((-Custom shape radius not scalable --> make universal scalability, normal-orient and offset))
-'''
