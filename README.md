@@ -1,5 +1,10 @@
 # Easy_Controls
-Control creating script for Maya. 
+Control creating script for Maya.
+
+Open with:
+
+import EasyCtrls_4 as EC
+EC.CtrlsUI()
 
 
 ## About the tool
@@ -16,6 +21,6 @@ Here are some incoming developments:
 * ~~Fix annoying dialog that pops up for each(!) control if transformations do not match when constraining~~
 * Add support for full control library
 
-This tool was created for speeding up the control creating process and for coding practice. I am still an inexperienced coder, and will gladly accept criticism and advice.
+This tool was created for speeding up the control creating process and, most of all, for coding practice. I am still an inexperienced coder, and will gladly accept criticism and advice.
 
 -Leevi
