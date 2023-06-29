@@ -12,6 +12,8 @@ EC.CtrlsUI()
 
 This tool creates zeroed out controls for selected objects and gives options to handle offsets, color and constraints in bulk.
 
+![Screenshot 2023-06-29 110607](https://github.com/Leewired/Easy_Controls/assets/123822810/4d85b8a1-8d47-4ad4-b681-064161e95be2)
+
 It works solidly, but it is not a finished project.
 This is a simple tool that I've mostly used for controls for face joints and FK-chains.
 
